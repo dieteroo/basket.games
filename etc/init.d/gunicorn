@@ -1,0 +1,46 @@
+#!/sbin/openrc-run
+
+# Description of the service
+description="Gunicorn service for running Flask application"
+
+# Directory where the Flask app is located
+directory="/opt/games"
+
+# The command to run Gunicorn
+command="/opt/games/venv/bin/gunicorn"
+command_args="--workers 4 --bind 0.0.0.0:5000 --access-logfile /var/log/gunicorn/output.log --error-logfile /var/log/gunicorn/error.log --log-level info app:app"
+# Or set it to warning, error, or critical
+
+# Specify the user and group under which the service should run
+supervisor="supervise-daemon"
+command_user="gunicornuser"  # The user that runs the app
+pidfile="/var/run/gunicorn.pid"
+
+# Generate a secure random secret key for Flask and export it
+generate_secret_key() {
+    # Generate a 32-byte random secret key and convert to hexadecimal
+    secret_key=$(openssl rand -hex 32)
+    
+    # Export the key as an environment variable
+    export SECRET_KEY="$secret_key"
+}
+
+# Ensure the app runs after the network is available
+depend() {
+    need net
+}
+
+start_pre() {
+    # Ensure log files exist and are owned by the gunicorn user
+    touch /var/log/gunicorn/output.log
+    touch /var/log/gunicorn/error.log
+    chown gunicornuser:www-data /var/log/gunicorn/output.log /var/log/gunicorn/error.log
+
+    # Call the function to generate the secret key
+    generate_secret_key
+}
+
+start_post() {
+    # Restart if the service crashes
+    supervise-daemon gunicorn --respawn-delay 5s --respawn-max 3
+}
