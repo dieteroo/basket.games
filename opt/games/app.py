@@ -304,6 +304,30 @@ def generate_individual_games_pdf(games, logo_path):
 def download_file(filename):
     return send_from_directory(GENERATED_PDFS_DIR, filename, as_attachment=True)
 
+@app.route('/results')
+def results():
+    # Assume `games` is the data fetched from the API
+    games = fetch_games_data()
+
+    # Group the games by venue
+    games_by_venue = {}
+    for game in games:
+        venue = game.get('accNaam', 'Unknown Venue')
+        # Extract referees from 'wedOff' and join their names into a single string
+        referees = ', '.join([ref.get('name', 'Unknown Referee') for ref in game.get('wedOff', [])])
+        game['referees'] = referees  # Add referees info to the game data
+
+        if venue not in games_by_venue:
+            games_by_venue[venue] = []
+        games_by_venue[venue].append(game)
+
+    # Sort games for each venue by start time
+    for venue in games_by_venue:
+        games_by_venue[venue].sort(key=lambda g: g.get('beginTijd', ''))
+
+    return render_template('result.html', games_by_venue=games_by_venue, individual_pdfs=[])
+
+
 # Health check route example in app.py
 @app.route('/health')
 def health_check():
