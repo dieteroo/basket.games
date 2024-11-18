@@ -1,32 +1,84 @@
-<!-- templates/result.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Download PDFs</title>
+    <title>Hageland United - Download PDFs</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
         .container { margin-top: 50px; }
+        /* Custom button colors */
+        .btn-success {
+            background-color: #96c11f !important;
+            border-color: #96c11f !important;
+            color: #ffffff !important;
+        }
+
+        .btn-info {
+            background-color: #002b5c !important;
+            border-color: #002b5c !important;
+            color: #ffffff !important;
+        }
+
+        .btn-info:hover, .btn-info:focus, .btn-info:active {
+            background-color: #001f46 !important; /* Slightly darker shade for hover effect */
+        }
+
+        .btn-success:hover, .btn-success:focus, .btn-success:active {
+            background-color: #85ab1a !important; /* Slightly darker shade for hover effect */
+        }
     </style>
 </head>
 <body>
+    <!-- Add the logo -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://hagelandunited.be/wp-content/uploads/2022/06/HagelandUnited_150x150.png" alt="Hageland United Logo" width="150" height="150">
+    </div>
     <div class="container">
-        <h1 class="mb-4">PDFs Generated Successfully</h1>
         <div class="mb-3">
-            <h3>Kleedkamer PDF:</h3>
+            <h3>Kleedkamer:</h3>
             <a href="{{ url_for('download_file', filename=kleedkamer_pdf) }}" class="btn btn-success">Download {{ kleedkamer_pdf }}</a>
         </div>
         <div>
-            <h3>Individual Games PDFs:</h3>
+            <h3>Scheidsrechters:</h3>
             {% for pdf in individual_pdfs %}
                 <a href="{{ url_for('download_file', filename=pdf) }}" class="btn btn-info mb-2">Download {{ pdf }}</a>
             {% endfor %}
         </div>
+        <div>
+        {% for venue, venue_games in games_by_venue.items() %}
+            <h3>{{ venue }}</h3>
+            <table border="1" cellpadding="5" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Game ID</th>
+                        <th>Date</th>
+                        <th>Start Time</th>
+                        <th>Home Team</th>
+                        <th>Away Team</th>
+                        <th>Referee 1</th>
+                        <th>Referee 2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in venue_games %}
+                        <tr>
+                            <td>{{ game.get("wedID", "N/A") }}</td>
+                            <td>{{ game.get("datumString", "N/A") }}</td>
+                            <td>{{ game.get("beginTijd", "N/A") }}</td>
+                            <td>{{ game.get("tTNaam", "N/A") }}</td>
+                            <td>{{ game.get("tUNaam", "N/A") }}</td>
+                            <td>{{ game.get("wedOff")[0] if game.get("wedOff") else ''}}</td>
+                            <td>{{ game.get("wedOff")[1] if game.get("wedOff") else ''}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+        </div>
         <br /><br />
         <a href="{{ url_for('index') }}" class="btn btn-secondary mt-4">Generate More PDFs</a>
+    <br /><br />
     </div>
-
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
