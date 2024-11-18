@@ -13,8 +13,8 @@ app.secret_key = os.environ.get('SECRET_KEY')
 TEAMS = [
     "HSE++1", "HSE++2", "DSE++1", "DSE++2", "J18++1", "J18++2",
     "J16++1", "J16++2", "G14++1", "G14++2", "G12++1", "G12++2",
-    "G10++1", "G10++2", "G08++1", "G08++2", "G08++3", 
-    "M16++1", "M16++2", "M14++1", "M14++2", "M12++1", "M12++2"
+    "G10++1", "G10++2", "G08++1", "G08++2", "G08++3", "M16++1", "M16++2", "M14++1",
+    "M14++2", "M12++1", "M12++2"
 ]
 VENUES = {
     "BVBL500419": "Boutersem",
@@ -60,6 +60,18 @@ def index():
             flash('No games found for the selected criteria.', 'info')
             return redirect(url_for('index'))
 
+        from collections import defaultdict
+
+        # Group games by 'accNaam'
+        games_by_venue = defaultdict(list)
+        for game in games:
+            accNaam = game.get("accNaam", "Unknown Venue")
+            games_by_venue[accNaam].append(game)
+
+        # Sort games within each venue by 'beginTijd'
+        for venue in games_by_venue:
+            games_by_venue[venue] = sorted(games_by_venue[venue], key=lambda x: x.get("beginTijd", ""))
+
         # Generate PDFs
         try:
             # Generate Kleedkamer PDF
@@ -67,7 +79,7 @@ def index():
             # Generate Individual Games PDFs
             individual_pdfs = generate_individual_games_pdf(games, LOGO_PATH)
 
-            return render_template('result.html', kleedkamer_pdf=kleedkamer_pdf, individual_pdfs=individual_pdfs)
+            return render_template('result.html', kleedkamer_pdf=kleedkamer_pdf, individual_pdfs=individual_pdfs, games_by_venue=games_by_venue)
         except Exception as e:
             flash(f'Error generating PDFs: {e}', 'danger')
             return redirect(url_for('index'))
@@ -239,16 +251,16 @@ def generate_individual_games_pdf(games, logo_path):
                         <tr>
                             <td style="padding: 15px 0;">1e</td>
                             <td style="padding: 15px 0;">{game.get("wedOff")[0] if game.get("wedOff") else ''}</td>
-                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;"> , </td>
-                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;"> , </td>
-                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;"> , </td>
+                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;">  </td>
+                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;">  </td>
+                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;">  </td>
                         </tr>
                         <tr>
                             <td style="padding: 15px 0;">2e</td>
                             <td style="padding: 15px 0;">{game.get("wedOff")[1] if game.get("wedOff") and len(game.get("wedOff")) > 1 else ''}</td>
-                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;"> , </td>
-                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;"> , </td>
-                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;"> , </td>
+                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;">  </td>
+                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;">  </td>
+                            <td style="text-align: center; padding: 15px 0; width: 120px; border: solid 1px #000;">  </td>
                         </tr>
                     </table>
 
@@ -326,7 +338,6 @@ def results():
         games_by_venue[venue].sort(key=lambda g: g.get('beginTijd', ''))
 
     return render_template('result.html', games_by_venue=games_by_venue, individual_pdfs=[])
-
 
 # Health check route example in app.py
 @app.route('/health')
