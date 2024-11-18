@@ -42,6 +42,7 @@ apk add --no-cache \
     nano \
     curl \
     python3 \
+    openssl \
     py3-pip
 
 # Install build tools and libraries required for WeasyPrint and Flask
