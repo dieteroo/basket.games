@@ -26,18 +26,32 @@ def fetch_games(teams, acc_guids, selected_date):
 
                 if game_acc_guid in acc_guids:
                     game_date_str = game_data.get("datumString")
+                    
+                    # Validate datumString before processing
+                    if not game_date_str:
+                        logging.warning(f"Missing or null datumString for game: {game_data}")
+                        continue
+                    
                     try:
-                        game_date = datetime.strptime(game_date_str, "%d-%m-%Y").date()
-                    except ValueError:
-                        try:
-                            game_date = datetime.strptime(game_date_str, "%Y-%m-%d").date()
-                        except ValueError:
+                        game_date = None
+                        # Attempt to parse the date in multiple formats
+                        for fmt in ("%d-%m-%Y", "%Y-%m-%d"):
+                            try:
+                                game_date = datetime.strptime(game_date_str, fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                        
+                        if not game_date:
                             logging.warning(f"Unrecognized date format: {game_date_str}")
                             continue
 
-                    if game_date == selected_date:
-                        games.append(game_data)
-                        logging.info(f"Game on selected date: {game_data}")
+                        if game_date == selected_date:
+                            games.append(game_data)
+                            logging.info(f"Game on selected date: {game_data}")
+
+                    except Exception as e:
+                        logging.error(f"Error processing game date for game: {game_data}. Error: {e}")
                 else:
                     logging.debug(f"No match for accGUID: {game_acc_guid}")
 
@@ -48,6 +62,7 @@ def fetch_games(teams, acc_guids, selected_date):
 
     logging.info(f"Total games found: {len(games)}")
     return games
+
 
 def group_games_by_date(games):
     games_by_date = {}
